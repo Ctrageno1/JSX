@@ -1,66 +1,86 @@
-import React, { Component } from 'react';
-import { Navbar, NavbarBrand } from 'reactstrap';
-import Menu from './MenuComponent';
-import DishDetail from './DishdetailComponent';
-import { DISHES } from '../Shared/dishes';
-import Header from './HeaderComponent';
-import Footer from './FooterComponent';
+import React, { Component } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { DISHES } from "../Shared/dishes";
+import { COMMENTS } from "../Shared/comments";
+import { PROMOTIONS } from "../Shared/promotions";
+import { LEADERS } from "../Shared/leaders";
+import Menu from "./MenuComponent";
+import DishDetail from "./DishdetailComponent";
+import Header from "./HeaderComponent";
+import Footer from "./FooterComponent";
+import Home from "./HomeComponent";
+import Contact from "./ContactComponent";
+import About from "./AboutComponent";
 
 class Main extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      dishes: DISHES,
-      selectedDish: null,
-      dishContent: null, // Variable to hold the content from the external URL
-    };
-  }
+	constructor(props) {
+		super(props);
 
-  componentDidMount() {
-    // Fetch the content from the external URL
-    fetch('http://dish.id')
-      .then((response) => response.text())
-      .then((data) => {
-        this.setState({ dishContent: data });
-      })
-      .catch((error) => {
-        console.log('Error fetching dish content:', error);
-      });
-  }
+		this.state = {
+			dishes: DISHES,
+			comments: COMMENTS,
+			promotions: PROMOTIONS,
+			leaders: LEADERS,
+		};
+	}
 
-  onDishSelect(dishId) {
-    this.setState({ selectedDish: dishId });
-  }
+	render() {
+		const HomePage = () => {
+			return (
+				<Home
+					dish={this.state.dishes.filter((dish) => dish.featured)[0]}
+					promotion={
+						this.state.promotions.filter(
+							(promo) => promo.featured
+						)[0]
+					}
+					leader={
+						this.state.leaders.filter(
+							(leader) => leader.featured
+						)[0]
+					}
+				/>
+			);
+		};
 
-  render() {
-    const { dishes, selectedDish, dishContent } = this.state;
+		const DishWithId = () => {
+			const { dishId } = useParams();
+			return (
+				<DishDetail
+					dish={
+						this.state.dishes.filter(
+							(dish) => dish.id === parseInt(dishId, 10)
+						)[0]
+					}
+					comments={this.state.comments.filter(
+						(comment) => comment.dishId === parseInt(dishId, 10)
+					)}
+				/>
+			);
+		};
 
-    return (
-      <div>
-        <Navbar dark color="primary">
-          <div className="container">
-            <NavbarBrand href="/">Ristorante Con Fusion</NavbarBrand>
-          </div>
-        </Navbar>
-        <Menu dishes={dishes} onClick={(dishId) => this.onDishSelect(dishId)} />
-        <DishDetail dish={dishes.filter((dish) => dish.id === selectedDish)[0]} />
-
-        <div>
-          <Header />
-          <Menu dishes={dishes} onClick={(dishId) => this.onDishSelect(dishId)} />
-          <DishDetail dish={dishes.filter((dish) => dish.id === selectedDish)[0]} />
-          <Footer />
-        </div>
-
-        {dishContent && (
-          <div>
-            <h3>External URL Content:</h3>
-            <p>{dishContent}</p>
-          </div>
-        )}
-      </div>
-    );
-  }
+		return (
+			<div>
+				<Header />
+				<Routes>
+					<Route path="/home" element={<HomePage />} />
+					<Route
+						path="/aboutus"
+						element={<About leaders={this.state.leaders} />}
+					/>
+					<Route
+						path="/menu"
+						element={<Menu dishes={this.state.dishes} />}
+					/>
+					<Route path="/menu/:dishId" element={<DishWithId />} />
+					<Route path="/contactus" element={<Contact />} />
+					<Route path="*" element={<HomePage />} />
+				</Routes>
+				<Footer />
+			</div>
+		);
+	}
 }
 
 export default Main;
